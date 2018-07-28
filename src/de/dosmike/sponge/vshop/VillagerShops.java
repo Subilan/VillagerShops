@@ -44,7 +44,7 @@ import com.google.inject.Inject;
 
 import de.dosmike.sponge.languageservice.API.LanguageService;
 import de.dosmike.sponge.languageservice.API.PluginTranslation;
-import de.dosmike.sponge.vshop.webapi.WebAPI;
+import de.dosmike.sponge.vshop.webapi.VShopServlet;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -53,7 +53,7 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 
-@Plugin(id="vshop", name="VillagerShops", version="1.8.1", authors={"DosMike"})
+@Plugin(id="vshop", name="VillagerShops", version="1.9-pre1", authors={"DosMike"})
 public class VillagerShops {
 	
 	public static void main(String[] args) { System.err.println("This plugin can not be run as executable!"); }
@@ -150,20 +150,11 @@ public class VillagerShops {
 		customSerializer.registerType(TypeToken.of(NPCguard.class), new NPCguardSerializer());
 		
 		Sponge.getEventManager().registerListeners(this, new EventListeners());
-		
-		try {
-			//trick here:
-			// if we can't get the class for name an exception is thrown preventing the real depending code from even being looked at.
-			// this requires the entry point to not be obfuscated, but for an API that's normally not the case anyways. 
-			Class<?> webAPIAPI = Class.forName("valandur.webapi.api.WebAPIAPI");
-			if (webAPIAPI != null) WebAPI.init();
-		} catch(Exception e) {
-			l("WebAPI not found, skipping");
-		}
 	}
 	
 	@Listener
 	public void onServerStart(GameStartedServerEvent event) {
+		l("Registering commands...");
 		CommandRegistra.register();
 		
 		try {
@@ -175,6 +166,16 @@ public class VillagerShops {
 		
 		loadConfigs();
 		startTimers();
+
+		try {
+			//trick here:
+			// if we can't get the class for name an exception is thrown preventing the real depending code from even being looked at.
+			// this requires the entry point to not be obfuscated, but for an API that's normally not the case anyways. 
+			Class<?> ServletServiceClass = Class.forName("valandur.webapi.servlet.base.ServletService");
+			if (ServletServiceClass != null) VShopServlet.init();
+		} catch(Exception e) {
+			l("WebAPI not found, skipping");
+		}
 		
 		l("VillagerShops is now ready!");
 	}

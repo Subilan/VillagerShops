@@ -63,6 +63,9 @@ public class StockItem {
 	public int getMaxStock() {
 		return maxStock;
 	}
+	public void setMaxStock(int stockLimit) {
+		maxStock = stockLimit;
+	}
 	public int getStocked() {
 		return maxStock>0?stocked:item.getQuantity();
 	}

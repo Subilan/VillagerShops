@@ -539,6 +539,29 @@ static void register() {
 					return CommandResult.success();
 				}
 			}).build());
+	children.put(Arrays.asList("tphere"), CommandSpec.builder()
+			.permission("vshop.edit.move")
+			.arguments(
+					GenericArguments.uuid(Text.of("shopid"))
+			) .executor(new CommandExecutor() {
+				@Override
+				public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+					if (!(src instanceof Player)) { src.sendMessage(lang.localText("cmd.playeronly").resolve(src).orElse(Text.of("[Player only]"))); return CommandResult.success(); }
+					Player player = (Player)src;
+					
+					Optional<NPCguard> npc = VillagerShops.getNPCfromShopUUID(args.<UUID>getOne("shopid").get());
+					if (npc.isPresent()) {
+						src.sendMessage(lang.localText("cmd.common.noshopforid").resolve(src).orElse(Text.of("[Shop not found]")));
+						return CommandResult.success();
+					}
+					NPCguard guard = npc.get();
+					VillagerShops.closeShopInventories(guard.getIdentifier());
+					guard.move(player.getLocation());
+					guard.setRot(player.getHeadRotation());
+					
+					return CommandResult.success();
+				}
+			}).build());
 	children.put(Arrays.asList("ledger", "log"), CommandSpec.builder()
 			.permission("vshop.ledger.base")
 			.arguments(
