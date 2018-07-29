@@ -25,10 +25,12 @@ import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
 import org.spongepowered.api.event.world.SaveWorldEvent;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
@@ -53,7 +55,12 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 
-@Plugin(id="vshop", name="VillagerShops", version="1.9-pre1", authors={"DosMike"})
+@Plugin(id="vshop", name="VillagerShops",
+	version="1.9-pre2", authors={"DosMike"},
+	dependencies = {
+		@Dependency(id="langswitch", optional=false),
+		@Dependency(id="webapi", optional=true)
+	})
 public class VillagerShops {
 	
 	public static void main(String[] args) { System.err.println("This plugin can not be run as executable!"); }
@@ -151,6 +158,22 @@ public class VillagerShops {
 		
 		Sponge.getEventManager().registerListeners(this, new EventListeners());
 	}
+	/** Dependency management does not really work within sponge, it relies way to heavily on alphabetical 
+	 * sorting event though i specified deps EVERYWHERE i could imagine. <br>
+	 * So In order for this hook to load reliably after webapi and before that's continuing i have to use this
+	 * intermediate event, whether i like it or not */
+	@Listener
+	public void onServerPostInit(GamePostInitializationEvent event) {
+		try {
+			//trick here:
+			// if we can't get the class for name an exception is thrown preventing the real depending code from even being looked at.
+			// this requires the entry point to not be obfuscated, but for an API that's normally not the case anyways. 
+			if (Sponge.getPluginManager().getPlugin("webapi").isPresent())
+				VShopServlet.init();
+		} catch(Exception e) {
+			l("WebAPI not found, skipping");
+		}
+	}
 	
 	@Listener
 	public void onServerStart(GameStartedServerEvent event) {
@@ -166,16 +189,6 @@ public class VillagerShops {
 		
 		loadConfigs();
 		startTimers();
-
-		try {
-			//trick here:
-			// if we can't get the class for name an exception is thrown preventing the real depending code from even being looked at.
-			// this requires the entry point to not be obfuscated, but for an API that's normally not the case anyways. 
-			Class<?> ServletServiceClass = Class.forName("valandur.webapi.servlet.base.ServletService");
-			if (ServletServiceClass != null) VShopServlet.init();
-		} catch(Exception e) {
-			l("WebAPI not found, skipping");
-		}
 		
 		l("VillagerShops is now ready!");
 	}

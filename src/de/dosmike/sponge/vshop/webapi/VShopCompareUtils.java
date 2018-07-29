@@ -41,18 +41,19 @@ public class VShopCompareUtils {
 		if (update.getName()!=null &&  !update.getName().equals(TextSerializers.FORMATTING_CODE.serialize(shop.getDisplayName()))) {
 			shop.setDisplayName(TextSerializers.FORMATTING_CODE.deserialize(update.getName()));
 		}
-		if (update.getOwner()!=null) {
-			if (update.isPlayerShop() == null)
-				throw new BadRequestException("Missing flag playershop");
-			if (!update.isPlayerShop()) {
-				throw new BadRequestException("Can't set owner of non player-shops");
-			} else {
+		if (update.getOwner()!=null &&  !update.getOwner().equals(shop.getShopOwner().orElse(null))) {
+//			if (update.isPlayerShop() == null)
+//				throw new BadRequestException("Missing flag playershop");
+//			if (!update.isPlayerShop()) {
+//				throw new BadRequestException("Can't set owner of non player-shops");
+//			} else {
 				shop.setPlayerShop(update.getOwner());
-			}
-		} else if (!update.isPlayerShop()) {
+//			}
+//		} else if (!update.isPlayerShop()) {
+		} else if (update.getOwner()==null &&  shop.getShopOwner().isPresent()) {
 			shop.setPlayerShop(null);
-		} else {
-			throw new BadRequestException("Missing owner UUID for player-shop");
+//		} else {
+//			throw new BadRequestException("Missing owner UUID for player-shop");
 		}
 		if (update.getRotation()!=null &&  update.getRotation()!=shop.getRot().getY()) {
 			shop.setRot(new Vector3d(0.0, update.getRotation(), 0.0));
@@ -68,7 +69,7 @@ public class VShopCompareUtils {
 			}
 		}
 		
-		if (respawnShop && !rep.isRemoved()) {
+		if (respawnShop && rep != null && !rep.isRemoved()) {
 			rep.remove();
 			//tick will respawn the new entity
 		}

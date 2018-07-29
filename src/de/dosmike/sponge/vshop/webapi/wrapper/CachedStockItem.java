@@ -19,15 +19,15 @@ import valandur.webapi.util.Constants;
 @ApiModel("VillagerShopsStockItem")
 public class CachedStockItem extends CachedObject<StockItem> {
 
-	int id;
+	Integer id;
 	@ApiModelProperty(value = "The index of this item withing the shops inventory")
 	public int getId() {
 		return id;
 	}
-	UUID shopId;
+	String shopId;
 	@ApiModelProperty(value = "The shop uuid offering this item listing")
 	public UUID getShopId() {
-		return shopId;
+		return UUID.fromString(shopId);
 	}
 	
 	Double buyPrice;
@@ -82,13 +82,23 @@ public class CachedStockItem extends CachedObject<StockItem> {
 		super(null);
 	}
 	public CachedStockItem(StockItem item) {
-		this(item, -1, null);
+		super(item);
+		
+		this.id = -1;
+		this.shopId = null;
+		this.buyPrice = item.getBuyPrice();
+		this.sellPrice = item.getSellPrice();
+		this.currency = item.getCurrency().getId();
+		this.stock = item.getStocked();
+		this.maxStock = item.getMaxStock();
+		this.hasStock = this.maxStock > 0;
+		this.item = item.getItem().createSnapshot();
 	}
 	public CachedStockItem(StockItem item, int id, UUID shopID) {
 		super(item);
 		
 		this.id = id;
-		this.shopId = shopID;
+		this.shopId = shopID == null ? null : shopID.toString();
 		this.buyPrice = item.getBuyPrice();
 		this.sellPrice = item.getSellPrice();
 		this.currency = item.getCurrency().getId();
@@ -100,14 +110,14 @@ public class CachedStockItem extends CachedObject<StockItem> {
 
 	@Override
 	public String getLink() {
-		return Constants.BASE_PATH + "/shop/" + shopId + "/item/" + id;
+		return Constants.BASE_PATH + "/vshop/shop/" + shopId + "/item/" + id;
 	}
 	
 	@Override
 	public Optional<StockItem> getLive() {
 		if (id < 0 || shopId == null)
 			return Optional.empty();
-		Optional<NPCguard> g = VillagerShops.getNPCfromShopUUID(shopId);
+		Optional<NPCguard> g = VillagerShops.getNPCfromShopUUID(getShopId());
 		if (!g.isPresent()) 
 			return Optional.empty();
 		InvPrep inv = g.get().getPreparator();
@@ -123,9 +133,9 @@ public class CachedStockItem extends CachedObject<StockItem> {
 			throw new BadRequestException("Max stock can't be negative");
 		if (sellPrice == null && buyPrice == null)
 			throw new BadRequestException("Buy price and sell price can't both be omitted!");
-		if (sellPrice < 0)
+		if (sellPrice != null && sellPrice < 0)
 			throw new BadRequestException("Sell price can't be negative");
-		if (buyPrice < 0)
+		if (buyPrice != null && buyPrice < 0)
 			throw new BadRequestException("Buy price can't be negative");
 		if (item == null)
 			throw new BadRequestException("Missing item snapshot");

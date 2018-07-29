@@ -68,9 +68,11 @@ public class NPCguard {
 			if (!chunk.loadChunk(false)) 
 				throw new RuntimeException("Unable to load chunk for shop to remove old entity");
 		}
-		chunk.getEntity(le.getUniqueId()).ifPresent(ent->{
+		/*chunk.getEntity(le.getUniqueId()).ifPresent(ent->{
 			if (ent instanceof Living) ent.remove();
-		});
+		});*/
+		if (le != null && !le.isRemoved())
+			le.remove();
 		loc = newLoc;
 	}
 	public void setLoc(Location<World> loc) {

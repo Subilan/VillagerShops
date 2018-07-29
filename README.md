@@ -34,10 +34,11 @@ For every edit command but create, please look at the shop
 - `/vshop reload` (reapply skins on sponge:human entities)
 - `/vshop ledger [Player]` or `/vshop log [Player]` (display last 100 transactions the players shops made)
 - `/vshop list [Player]` (list all shops, offer invsee for player shops and tp)
+- `/vshop tphere <Shop ID>` moves a shop by id (`/vshop identify`) to your current location
 
 Permissions
 -----
-- `vshop.edit.admin` edit any shop, create admin shops, `/vshop save`, `/vshop reload`, `/vshop list`
+- `vshop.edit.admin` edit any shop, create admin shops, `/vshop save`, `/vshop reload`, `/vshop list`, `/vshop tphere`
 - `vshop.edit.player` is required to create your player shop
 - the add, remove and delete command are always available for shops you own
 - `vshop.create.<ENTITYTYPE>` is required for each entity type a player should be allowed to create, where colons are replaced with dots and dashed are taken out. so for example `minecraft:villager`s would require `vshop.create.minecraft.villager`

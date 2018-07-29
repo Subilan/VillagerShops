@@ -22,10 +22,10 @@ import valandur.webapi.util.Constants;
 @ApiModel("VillagerShopsShop")
 public class CachedVShop extends CachedObject<NPCguard> {
 	
-	UUID uid;
+	String uid;
 	@ApiModelProperty(value = "The unique shop identifier; this is not the mob uuid")
 	public UUID getUID() {
-		return uid;
+		return UUID.fromString(uid);
 	}
 	
 	String name;
@@ -71,12 +71,12 @@ public class CachedVShop extends CachedObject<NPCguard> {
 	public UUID getOwner() {
 		return owner;
 	}
-	Boolean isPlayerShop;
-	@JsonDetails
-	@ApiModelProperty(value = "Returns wether this is a player shop or not", required = true)
-	public Boolean isPlayerShop() {
-		return isPlayerShop;
-	}
+//	Boolean isPlayerShop;
+//	@JsonDetails
+//	@ApiModelProperty(value = "Returns wether this is a player shop or not", required = true)
+//	public Boolean isPlayerShop() {
+//		return isPlayerShop;
+//	}
 	
 	List<CachedStockItem> stockItems;
 	@JsonDetails
@@ -98,14 +98,14 @@ public class CachedVShop extends CachedObject<NPCguard> {
 	public CachedVShop(NPCguard shop) {
 		super(shop);
 		
-		this.uid = shop.getIdentifier();
+		this.uid = shop.getIdentifier().toString();
 		this.name = TextSerializers.FORMATTING_CODE.serialize(shop.getDisplayName());
 		this.location = new CachedLocation(shop.getLoc());
 		this.rotation = shop.getRot().getY(); 
 		this.entityType = shop.getNpcType().getId();
 		this.entityVariant = shop.getVariantName();
 		this.owner = shop.getShopOwner().orElse(null);
-		this.isPlayerShop = shop.getShopOwner().isPresent();
+//		this.isPlayerShop = shop.getShopOwner().isPresent();
 		
 		Optional<Location<World>> stock = shop.getStockContainer();
 		if (stock.isPresent()) {
@@ -118,16 +118,16 @@ public class CachedVShop extends CachedObject<NPCguard> {
 		this.stockItems = new LinkedList<>();
 		int s = inv.size();
 		for (int i = 0; i < s; i++)
-			stockItems.add(new CachedStockItem(inv.getItem(i), i, uid));
+			stockItems.add(new CachedStockItem(inv.getItem(i), i, getUID()));
 	}
 	
 	@Override
 	public Optional<NPCguard> getLive() {
-		return VillagerShops.getNPCfromShopUUID(uid);
+		return VillagerShops.getNPCfromShopUUID(getUID());
 	}
 	
 	@Override
 	public String getLink() {
-		return Constants.BASE_PATH + "/shop/" + uid;
+		return Constants.BASE_PATH + "/vshop/shop/" + uid;
 	}
 }

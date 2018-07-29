@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.Location;
@@ -26,7 +25,6 @@ import valandur.webapi.WebAPI;
 import valandur.webapi.serialize.SerializeService;
 import valandur.webapi.servlet.base.BaseServlet;
 import valandur.webapi.servlet.base.Permission;
-import valandur.webapi.servlet.base.ServletService;
 import valandur.webapi.shadow.io.swagger.annotations.Api;
 import valandur.webapi.shadow.io.swagger.annotations.ApiOperation;
 import valandur.webapi.shadow.javax.ws.rs.BadRequestException;
@@ -109,6 +107,7 @@ public class VShopServlet extends BaseServlet {
 					TextSerializers.FORMATTING_CODE.deserialize(req.getName()),
 					location.get(), 
 					req.getRotation());
+			VShopCompareUtils.applyDiv(req, npc);
 			
 			return new CachedVShop(npc);
 		});
@@ -195,7 +194,7 @@ public class VShopServlet extends BaseServlet {
 			
 			List<CachedStockItem> csi = new ArrayList<>(s);
 			for (int i=0;i<s;i++)
-				csi.add(new CachedStockItem(inv.getItem(i)));
+				csi.add(new CachedStockItem(inv.getItem(i), i, npc.get().getIdentifier()));
 			
 			return csi;
 		});
@@ -220,7 +219,7 @@ public class VShopServlet extends BaseServlet {
 			if (item < 0 || item >= s) 
 				throw new BadRequestException("Item index out of bounds (0 <= "+item+" < "+s+")");
 			
-			return new CachedStockItem(inv.getItem(item));
+			return new CachedStockItem(inv.getItem(item), item, npc.get().getIdentifier());
 		});
 	}
 	
@@ -251,7 +250,7 @@ public class VShopServlet extends BaseServlet {
 			
 			inv.addItem(new StockItem(req.getItem().createStack(), req.getSellPrice(), req.getBuyPrice(), VillagerShops.getInstance().CurrencyByName(req.getCurrency()),req.getMaxStock()));
 			
-			return new CachedStockItem(inv.getItem(s));
+			return new CachedStockItem(inv.getItem(s), s, npc.get().getIdentifier());
 		});
 		
 		return Response.created(new URI(null,null,shop.getLink(),null))
@@ -285,7 +284,7 @@ public class VShopServlet extends BaseServlet {
 			
 			inv.setItem(item, new StockItem(req.getItem().createStack(), req.getSellPrice(), req.getBuyPrice(), VillagerShops.getInstance().CurrencyByName(req.getCurrency()),req.getMaxStock()));
 			
-			return new CachedStockItem(inv.getItem(item));
+			return new CachedStockItem(inv.getItem(item), item, npc.get().getIdentifier());
 			
 		} catch (RuntimeException rte) {
 			if (rte instanceof BadRequestException) {
@@ -319,7 +318,7 @@ public class VShopServlet extends BaseServlet {
 			if (item < 0 || item >= s) 
 				throw new BadRequestException("Item index out of bounds (0 <= "+item+" < "+s+")");
 			
-			CachedStockItem rem = new CachedStockItem(inv.getItem(item));
+			CachedStockItem rem = new CachedStockItem(inv.getItem(item), item, npc.get().getIdentifier());
 			inv.removeIndex(item);
 			
 			return rem;
@@ -335,12 +334,7 @@ public class VShopServlet extends BaseServlet {
 	}
 
 	public static void init() {
-		Optional<ServletService> ss = Sponge.getServiceManager().provide(ServletService.class);
-		if (!ss.isPresent()) {
-			VillagerShops.l("WebAPI ServletService not running!");
-			return;
-		}
-		ss.get().registerServlet(VShopServlet.class);
+		WebAPI.getServletService().registerServlet(VShopServlet.class);
 
 		SerializeService srv = WebAPI.getSerializeService();
         srv.registerCache(NPCguard.class, CachedVShop.class);
